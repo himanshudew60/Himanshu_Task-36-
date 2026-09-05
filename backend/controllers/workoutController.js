@@ -52,20 +52,17 @@ const createWorkout = async (req, res) => {
 
 const getWorkouts = async (req, res) => {
   try {
-    const workouts = await Workout.find();
+    const workouts = await Workout.find().sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
       count: workouts.length,
-      data: workouts,
+      data: workouts
     });
   } catch (error) {
-    console.error("Get Workouts error:", error);
-
     return res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: error.message,
+      message: "Unable to fetch workouts"
     });
   }
 };

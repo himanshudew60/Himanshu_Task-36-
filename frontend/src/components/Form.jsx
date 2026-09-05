@@ -1,187 +1,157 @@
 import React, { useEffect, useState } from "react";
-
 import {
   createWorkOut,
   updateWorkout
 } from "../services/WorkOutService";
+import { useWorkout } from "../context/WorkoutContext";
 
-function Form({
-  editingWorkout,
-  onWorkoutChange,
-  onCancel
-}) {
+function Form({ editingWorkout, onEditDone }) {
+  const { dispatch } = useWorkout();
 
   const [title, setTitle] = useState("");
   const [loads, setLoad] = useState("");
   const [reps, setReps] = useState("");
+  const [error, setError] = useState("");
 
-  // When editingWorkout changes,
-  // populate the form
   useEffect(() => {
-
     if (editingWorkout) {
-
       setTitle(editingWorkout.title);
       setLoad(editingWorkout.loads);
       setReps(editingWorkout.reps);
-
     } else {
-
       setTitle("");
       setLoad("");
       setReps("");
-
     }
-
   }, [editingWorkout]);
 
-
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
+    setError("");
+
+    if (!title || !loads || !reps) {
+      setError("Please fill all fields");
+      return;
+    }
+
+    const data = {
+      title,
+      loads: Number(loads),
+      reps: Number(reps)
+    };
+
     try {
-
-      const data = {
-        title: title,
-        loads: Number(loads),
-        reps: Number(reps)
-      };
-
-      // UPDATE
       if (editingWorkout) {
-
         const response = await updateWorkout(
           editingWorkout._id,
           data
         );
 
-        console.log("Updated:", response);
+        dispatch({
+          type: "UPDATE_WORKOUT",
+          payload: response.data
+        });
 
-      }
-
-      // CREATE
-      else {
-
+        onEditDone();
+      } else {
         const response = await createWorkOut(data);
 
-        console.log("Created:", response);
+        dispatch({
+          type: "ADD_WORKOUT",
+          payload: response.data
+        });
 
+        setTitle("");
+        setLoad("");
+        setReps("");
       }
 
-      // Get latest data from database
-      await onWorkoutChange();
-
-      // Clear form
-      setTitle("");
-      setLoad("");
-      setReps("");
-
-      // Exit edit mode
-      onCancel();
-
+      dispatch({ type: "CLEAR_ERROR" });
     } catch (error) {
-
-      console.log(error);
-
+      setError(
+        error.response?.data?.message ||
+          "Something went wrong"
+      );
     }
   };
-
 
   return (
     <form
       onSubmit={handleSubmit}
-      className="bg-gray-300 rounded-2xl p-5"
+      className="w-full rounded-2xl bg-gray-300 p-5"
     >
-
-      <h1 className="font-bold mb-2">
+      <h1 className="mb-4 text-xl font-bold">
         {editingWorkout
           ? "Update Workout"
-          : "Add New Workout"
-        }
+          : "Add New Workout"}
       </h1>
 
-
-      {/* TITLE */}
-      <div className="mb-3">
-
-        <label>
-          Exercise Title:
-        </label>
-
-        <br />
-
-        <input
-          className="bg-white rounded-md w-full h-8 mt-2"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-
-      </div>
-
-
-      {/* LOAD */}
-      <div className="mb-3">
-
-        <label>
-          Load (in Kg's):
-        </label>
-
-        <br />
-
-        <input
-          className="bg-white rounded-md w-full h-8 mt-2"
-          type="number"
-          value={loads}
-          onChange={(e) => setLoad(e.target.value)}
-        />
-
-      </div>
-
-
-      {/* REPS */}
-      <div className="mb-3">
-
-        <label>
-          Reps:
-        </label>
-
-        <br />
-
-        <input
-          className="bg-white rounded-md w-full h-8 mt-2"
-          type="number"
-          value={reps}
-          onChange={(e) => setReps(e.target.value)}
-        />
-
-      </div>
-
-
-      {/* BUTTON */}
-      <button
-        type="submit"
-        className="bg-green-500 mt-2 text-white px-4 py-2 rounded"
-      >
-        {editingWorkout
-          ? "Update Workout"
-          : "Add Workout"
-        }
-      </button>
-
-
-      {/* CANCEL */}
-      {editingWorkout && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="bg-gray-500 mt-2 ml-2 text-white px-4 py-2 rounded"
-        >
-          Cancel
-        </button>
+      {error && (
+        <div className="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-600">
+          {error}
+        </div>
       )}
 
+      <div className="flex flex-col gap-3">
+        <div>
+          <label className="mb-1 block font-semibold">
+            Title
+          </label>
+
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full rounded-lg border bg-white p-2 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block font-semibold">
+            Load
+          </label>
+
+          <input
+            type="number"
+            value={loads}
+            onChange={(e) => setLoad(e.target.value)}
+            className="w-full rounded-lg border bg-white p-2 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1 block font-semibold">
+            Reps
+          </label>
+
+          <input
+            type="number"
+            value={reps}
+            onChange={(e) => setReps(e.target.value)}
+            className="w-full rounded-lg border bg-white p-2 outline-none"
+          />
+        </div>
+
+        <button
+          type="submit"
+          className="rounded-lg bg-black px-4 py-2 text-white"
+        >
+          {editingWorkout
+            ? "Update Workout"
+            : "Add Workout"}
+        </button>
+
+        {editingWorkout && (
+          <button
+            type="button"
+            onClick={onEditDone}
+            className="rounded-lg bg-gray-500 px-4 py-2 text-white"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

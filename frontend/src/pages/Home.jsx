@@ -2,24 +2,32 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Card from "../components/Card";
 import Form from "../components/Form";
-
 import { getWorkouts } from "../services/WorkOutService";
+import { useWorkout } from "../context/WorkoutContext";
 
 function Home() {
-  const [workouts, setWorkouts] = useState([]);
-
-  // Store the workout that we want to edit
+  const { state, dispatch } = useWorkout();
   const [editingWorkout, setEditingWorkout] = useState(null);
 
   const fetchWorkouts = async () => {
     try {
+      dispatch({ type: "SET_LOADING", payload: true });
+
       const response = await getWorkouts();
 
-      console.log(response);
+      dispatch({
+        type: "SET_WORKOUTS",
+        payload: response.data
+      });
 
-      setWorkouts(response.data);
+      dispatch({ type: "CLEAR_ERROR" });
     } catch (error) {
-      console.log(error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Unable to load workouts"
+      });
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   };
 
@@ -28,37 +36,36 @@ function Home() {
   }, []);
 
   return (
-    <div className="h-screen w-full bg-gray-200">
-
+    <div className="min-h-screen w-full overflow-x-hidden bg-gray-200">
       <Navbar />
 
-      <div className="flex w-full h-[85%] overflow-auto">
+      <div className="grid w-full grid-cols-1 gap-4 p-4 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-4">
+          {state.loading && (
+            <p className="text-center">Loading workouts...</p>
+          )}
 
-        {/* Workout List */}
-        <div className="flex-1 max-h-full overflow-auto gap-y-10 flex flex-col justify-start items-center p-18">
+          {state.error && (
+            <p className="rounded-lg bg-red-100 p-3 text-red-600">
+              {state.error}
+            </p>
+          )}
 
-          {workouts.map((workout) => (
+          {state.workouts.map((workout) => (
             <Card
               key={workout._id}
               workout={workout}
               onEdit={setEditingWorkout}
-              onWorkoutChange={fetchWorkouts}
             />
           ))}
-
         </div>
 
-        {/* Form */}
-        <div className="w-100 h-full p-4">
-
+        <div className="min-w-0">
           <Form
             editingWorkout={editingWorkout}
-            onWorkoutChange={fetchWorkouts}
-            onCancel={() => setEditingWorkout(null)}
+            onEditDone={() => setEditingWorkout(null)}
           />
-
         </div>
-
       </div>
     </div>
   );

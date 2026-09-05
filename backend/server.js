@@ -11,7 +11,7 @@ connectDB();
 app.use(cors());
 app.use(express.json());
 
-app.use('/work',workoutRoutes)
+app.use('/api/workouts',workoutRoutes)
 
 app.listen(port, ()=>{
     console.log(`Server is Runnig on http://localhost:${port}`)
