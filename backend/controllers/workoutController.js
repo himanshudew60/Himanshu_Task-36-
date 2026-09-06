@@ -4,21 +4,21 @@ const Workout = require("../models/Workout");
 
 const createWorkout = async (req, res) => {
   try {
-    
-    
     const { title, loads, reps } = req.body;
-   
-    
-    // Validation
-    if (!title || !loads  || !reps) {
+
+
+    if (!title || !loads || !reps) {
       return res.status(400).json({
         success: false,
         message: "title, loads and reps are required",
       });
     }
 
-    // Check duplicate workout
-    const existingWorkout = await Workout.findOne({ title });
+    
+    const existingWorkout = await Workout.findOne({
+      title,
+      user_id: req.user._id,
+    });
 
     if (existingWorkout) {
       return res.status(409).json({
@@ -26,10 +26,13 @@ const createWorkout = async (req, res) => {
         message: "Workout already exists",
       });
     }
+
+  
     const workout = await Workout.create({
       title,
       loads,
       reps,
+      user_id: req.user._id,
     });
 
     return res.status(201).json({
@@ -52,21 +55,22 @@ const createWorkout = async (req, res) => {
 
 const getWorkouts = async (req, res) => {
   try {
-    const workouts = await Workout.find().sort({ createdAt: -1 });
+    const workouts = await Workout.find({
+      user_id: req.user._id,
+    }).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
-      count: workouts.length,
-      data: workouts
+      data: workouts,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Unable to fetch workouts"
+      message: "Internal server error",
+      error: error.message,
     });
   }
 };
-
 
 
 const getWorkout = async (req, res) => {

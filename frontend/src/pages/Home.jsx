@@ -37,7 +37,7 @@ function Home() {
 
   return (
     <div className="min-h-screen w-full overflow-x-hidden bg-gray-200">
-      <Navbar />
+     
 
       <div className="grid w-full grid-cols-1 gap-4 p-4 md:grid-cols-2">
         <div className="flex min-w-0 flex-col gap-4">
